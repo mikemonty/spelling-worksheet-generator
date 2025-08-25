@@ -1,125 +1,307 @@
-/* Basic layout */
-:root{
+/* =========================
+   Spelling Worksheet Generator – Modern UI
+   Drop-in replacement for styles.css
+   ========================= */
+
+/* ---------- Theme ---------- */
+:root {
+  --bg: #f5f7fb;
+  --fg: #0f172a;             /* slate-900 */
+  --muted: #475569;          /* slate-600 */
+  --panel: #ffffff;
+  --border: #e5e7eb;         /* gray-200 */
+  --accent: #3a68ff;         /* primary */
+  --accent-600: #2e55d1;
+  --accent-50: #eef3ff;
+  --ring: rgba(58, 104, 255, 0.35);
+
+  /* Worksheet variables (kept from original) */
   --page-margin: 0.5in;
   --line-height: 26px;
   --line-thickness: 2px;
   --line-gap: 10px;
-  --max-content-width: 1100px;
-  --accent: #3a68ff;
+  --max-content-width: 1200px;
 }
 
+/* ---------- Base / Reset ---------- */
 * { box-sizing: border-box; }
+html, body { height: 100%; }
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-  line-height: 1.4;
-  color: #111;
-  background: #fafafa;
+  color: var(--fg);
+  background: linear-gradient(180deg, #f7f9ff 0%, #f5f7fb 100%);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  line-height: 1.5;
 }
-header, footer {
-  padding: 16px;
-  background: #fff;
-  border-bottom: 1px solid #eee;
-}
-footer { border-top: 1px solid #eee; border-bottom: none; }
-header h1 { margin: 0 0 4px 0; }
-.subtitle { margin: 0; color: #555; }
 
+/* ---------- Header ---------- */
+header {
+  position: relative;
+  padding: 28px 16px;
+  background: radial-gradient(1200px 400px at 20% -20%, #eaf0ff 0%, #ffffff 60%),
+              linear-gradient(90deg, #ffffff 0%, #f8fbff 100%);
+  border-bottom: 1px solid var(--border);
+}
+header h1 {
+  margin: 0 0 6px 0;
+  font-size: clamp(22px, 2.4vw, 30px);
+  letter-spacing: -0.02em;
+}
+.subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* ---------- Layout ---------- */
 main {
   max-width: var(--max-content-width);
   margin: 0 auto;
-  padding: 16px;
+  padding: 20px 16px 60px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 18px;
 }
 .panel {
-  background: #fff;
-  border: 1px solid #eee;
-  border-radius: 8px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
   padding: 16px;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 6px 20px rgba(15, 23, 42, 0.06);
+  transition: transform 160ms ease, box-shadow 160ms ease;
 }
-.panel h2 { margin-top: 0; }
+.panel:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 2px 6px rgba(15, 23, 42, 0.05),
+    0 12px 28px rgba(15, 23, 42, 0.08);
+}
+.panel h2 {
+  margin: 2px 0 12px 0;
+  font-size: 16px;
+  letter-spacing: 0.02em;
+  color: #0b1220;
+}
 
+/* Make preview span full width */
+.preview-container {
+  grid-column: 1 / -1;
+}
+
+/* ---------- Forms ---------- */
 .form-row {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
-.form-row label { width: 260px; max-width: 40%; }
-.form-row input[type="number"],
-.form-row input[type="text"] { flex: 1; padding: 6px 8px; }
+.form-row label {
+  min-width: 220px;
+  max-width: 45%;
+  color: var(--muted);
+  font-size: 14px;
+}
+input[type="number"],
+input[type="text"],
+textarea {
+  flex: 1 1 auto;
+  width: 100%;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+textarea { resize: vertical; }
+input:focus,
+textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--ring);
+}
 
-.word-source label { margin-right: 16px; }
-.hidden { display: none !important; }
+/* Radio group (word source) */
+.word-source {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  margin: 14px 0;
+}
+.word-source legend {
+  padding: 0 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.word-source label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+.word-source input[type="radio"] {
+  appearance: none;
+  width: 14px; height: 14px; border-radius: 999px;
+  border: 2px solid var(--border);
+  display: inline-block;
+  position: relative;
+}
+.word-source input[type="radio"]:checked {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--ring);
+}
+.word-source input[type="radio"]:checked::after {
+  content: "";
+  position: absolute; inset: 3px;
+  background: var(--accent);
+  border-radius: 999px;
+}
 
+/* ---------- Lists / Library / Picked ---------- */
 .list {
-  border: 1px solid #eee;
-  border-radius: 6px;
-  padding: 8px;
-  min-height: 120px;
-  max-height: 220px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 6px;
+  min-height: 140px;
+  max-height: 260px;
   overflow: auto;
+  background: #fff;
 }
-
-.list .row {
+.row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 8px;
-  border-bottom: 1px dashed #eee;
+  gap: 10px;
+  padding: 10px 10px;
+  border-bottom: 1px dashed #eef1f6;
+  transition: background 100ms ease;
 }
-.list .row:last-child { border-bottom: none; }
-.row .word { font-weight: 500; }
-.row button { margin-left: 8px; }
-
-.picked { margin-top: 8px; }
-.picked-list .row { background: #f7fbff; }
+.row:last-child { border-bottom: none; }
+.row:hover { background: #fafcff; }
+.row .word { font-weight: 600; letter-spacing: 0.01em; }
+.picked { margin-top: 10px; }
+.picked-list .row { background: #f8fbff; }
 
 .bulk textarea { width: 100%; }
-.library-controls { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+
+/* Importer button-like label */
+.library-controls {
+  display: flex; flex-wrap: wrap;
+  gap: 10px; align-items: center; margin-top: 10px;
+}
 .library-controls .importer {
-  border: 1px solid #eee; padding: 6px 10px; border-radius: 6px; background: #f6f6f6; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px;
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 120ms, box-shadow 120ms, transform 80ms;
+}
+.library-controls .importer:active { transform: translateY(1px); }
+.library-controls .importer:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--ring);
 }
 .library-controls .importer input { display: none; }
 
-.actions button { margin-right: 8px; }
+/* ---------- Buttons ---------- */
+button {
+  appearance: none;
+  border: 1px solid transparent;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 120ms ease, transform 80ms ease, box-shadow 120ms ease;
+}
+button:hover { background: var(--accent-600); }
+button:active { transform: translateY(1px); }
+button:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--ring); }
 
-.preview-container { grid-column: 1 / span 2; }
+/* Subtle secondary buttons (for row actions) */
+.row button {
+  padding: 6px 10px;
+  font-size: 13px;
+  background: #ffffff;
+  color: var(--fg);
+  border: 1px solid var(--border);
+}
+.row button:hover {
+  background: var(--accent-50);
+  border-color: var(--accent);
+  color: var(--accent-600);
+}
+
+/* Action row */
+.actions {
+  display: flex; flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+.actions button:nth-child(1) {
+  background: #fff; color: var(--fg);
+  border: 1px solid var(--border);
+}
+.actions button:nth-child(1):hover {
+  background: var(--accent-50);
+  border-color: var(--accent);
+  color: var(--accent-600);
+}
+
+/* ---------- Preview (Paper) ---------- */
 .sheet {
-  background: white;
-  border: 1px solid #ddd;
-  padding: 12px;
-  min-height: 400px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  min-height: 420px;
+  box-shadow:
+    0 1px 2px rgba(15,23,42,0.03),
+    0 10px 40px rgba(15,23,42,0.08);
 }
 
-/* Worksheet styling */
-#preview {
-  column-count: 2;
-  column-gap: 24px;
-}
+/* Two-column content */
+#preview { column-count: 2; column-gap: 28px; }
 .ws-word {
   break-inside: avoid;
-  margin-bottom: 16px;
-  padding-bottom: 8px;
-  border-bottom: 1px dotted #ddd;
+  margin: 0 0 18px 0;
+  padding: 0 0 10px 0;
+  border-bottom: 1px dotted #e6e9ef;
 }
 .ws-word .sample {
-  font-size: 22px;
-  font-weight: 600;
+  font-size: clamp(18px, 2vw, 22px);
+  font-weight: 700;
   margin-bottom: 8px;
+  letter-spacing: 0.01em;
 }
-.ws-word .lines {
-  display: grid;
-  gap: var(--line-gap);
-}
+.ws-word .lines { display: grid; gap: var(--line-gap); }
 .ws-word .lines .line {
   height: var(--line-height);
-  border-bottom: var(--line-thickness) solid #000;
+  border-bottom: var(--line-thickness) solid #0f172a;
+  border-radius: 2px;
 }
 
-/* Print styles: US Letter, narrow margins, two columns */
+/* ---------- Responsive ---------- */
+@media (max-width: 980px) {
+  main { grid-template-columns: 1fr; }
+  .form-row label { min-width: 150px; }
+}
+
+/* ---------- Print styles (unchanged core behavior) ---------- */
 @page {
   size: Letter;
   margin: var(--page-margin);
@@ -128,9 +310,7 @@ main {
   body { background: white; }
   header, footer, .panel:not(.preview-container) { display: none !important; }
   main { padding: 0; }
-  .preview-container { grid-column: 1 / span 2; border: none; }
-  #preview {
-    column-count: 2;
-    column-gap: 24px;
-  }
+  .preview-container { grid-column: 1 / -1; border: none; box-shadow: none; }
+  .sheet { border: none; box-shadow: none; padding: 0; }
+  #preview { column-count: 2; column-gap: 24px; }
 }
