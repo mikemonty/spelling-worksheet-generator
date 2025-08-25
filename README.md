@@ -1,3 +1,1 @@
-# Spelling Worksheet Generator
-
-Instructions...
+# Spelling Worksheet Generator\n\nSee README in previous message; this is the full build.
