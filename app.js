@@ -1,0 +1,1 @@
+// (JavaScript logic here — shortened for space, same as before)

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spelling Worksheet Generator</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Spelling Worksheet Generator</h1>
+    <p class="subtitle">Two-column, print-ready worksheets for 8.5×11&quot; paper</p>
+  </header>
+
+  <main>
+    <section class="panel" id="builder">
+      <h2>Worksheet Builder</h2>
+      <div class="form-row">
+        <label for="linesPerWord">Lines per word</label>
+        <input type="number" id="linesPerWord" min="1" value="3" />
+      </div>
+
+      <div class="form-row">
+        <label for="excludeRecent">Exclude words used in last N worksheets</label>
+        <input type="number" id="excludeRecent" min="0" value="0" />
+      </div>
+
+      <fieldset class="word-source">
+        <legend>Word source</legend>
+        <label><input type="radio" name="wordSource" value="manual" checked /> Pick manually</label>
+        <label><input type="radio" name="wordSource" value="random" /> Random from my list</label>
+        <label><input type="radio" name="wordSource" value="quickadd" /> Quick add (comma/line-separated)</label>
+      </fieldset>
+
+      <div id="manualPicker" class="picker">
+        <div class="form-row">
+          <label for="manualFilter">Filter</label>
+          <input type="text" id="manualFilter" placeholder="search words..." />
+        </div>
+        <div id="wordList" class="list"></div>
+        <div class="picked">
+          <h3>Picked (<span id="pickedCount">0</span>)</h3>
+          <div id="pickedList" class="list picked-list"></div>
+        </div>
+      </div>
+
+      <div id="randomPicker" class="picker hidden">
+        <div class="form-row">
+          <label for="randomCount">How many random words?</label>
+          <input type="number" id="randomCount" min="1" value="10" />
+        </div>
+        <button id="btnPickRandom">Pick Random</button>
+      </div>
+
+      <div id="quickAdd" class="picker hidden">
+        <label for="quickAddArea">Enter words (comma or newline separated):</label>
+        <textarea id="quickAddArea" rows="6" placeholder="cat, dog, airplane..."></textarea>
+        <div class="note">These will be added to your library and also selected for this worksheet.</div>
+      </div>
+
+      <div class="form-row actions">
+        <button id="btnPreview">Preview</button>
+        <button id="btnPrint">Print / Save PDF</button>
+        <button id="btnSaveWorksheet">Save to History</button>
+      </div>
+    </section>
+
+    <section class="panel" id="library">
+      <h2>Word Library</h2>
+      <div class="form-row">
+        <input type="text" id="addWordInput" placeholder="Add a word" />
+        <button id="btnAddWord">Add</button>
+      </div>
+      <div class="bulk">
+        <textarea id="bulkAddArea" rows="4" placeholder="Bulk add (one per line)"></textarea>
+        <button id="btnBulkAdd">Bulk Add</button>
+      </div>
+      <div class="library-controls">
+        <button id="btnExportJSON">Export JSON</button>
+        <button id="btnExportCSV">Export CSV</button>
+        <label class="importer">
+          Import JSON/CSV
+          <input type="file" id="fileImport" accept=".json,.csv" />
+        </label>
+      </div>
+      <div id="libraryList" class="list"></div>
+    </section>
+
+    <section class="panel" id="history">
+      <h2>History</h2>
+      <div id="historyList" class="history-list"></div>
+    </section>
+
+    <section class="panel preview-container">
+      <h2>Print Preview</h2>
+      <div id="preview" class="sheet" aria-label="Worksheet preview"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Local-first • No sign-in • Your data stays in your browser</p>
+  </footer>
+
+  <template id="worksheet-word">
+    <div class="ws-word">
+      <div class="sample"></div>
+      <div class="lines"></div>
+    </div>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
