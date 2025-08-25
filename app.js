@@ -1,11 +1,12 @@
-// Spelling Worksheet Generator (local-first, with optional auto-seed)
+// Spelling Worksheet Generator (local-first, pure random)
 // - Two-column print layout
 // - Manual pick / Random pick / Quick add
-// - History tracking & usage counts
+// - History tracking
 // - Import/Export JSON or CSV
 // - Auto-seed from words-starter.json on first load (if present)
 // - Optional Name/Date header (checkbox)
-// - FIX: "Selected words" list always visible (moved out of manual picker)
+// - Selected words list is always visible
+// - Random pick = pure uniform (no usage counts)
 
 (() => {
   const $  = (sel) => document.querySelector(sel);
@@ -40,17 +41,35 @@
     return s;
   }
 
+  // Fisher-Yates shuffle
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // Uniform random sample without replacement
+  function randomSample(arr, n) {
+    if (n >= arr.length) return shuffle([...arr]);
+    const a = [...arr];
+    for (let i = 0; i < n; i++) {
+      const j = i + Math.floor(Math.random() * (a.length - i));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a.slice(0, n);
+  }
+
   let library  = loadJSON(KEYS.LIB, []);
   let history  = loadJSON(KEYS.HIST, []);
   let picked   = [];
   let settings = Object.assign({
     linesPerWord: 3,
-    excludeRecent: 0,
     includeNameDate: false
   }, loadJSON(KEYS.SETTINGS, {}));
 
   const linesPerWordEl    = $('#linesPerWord');
-  const excludeRecentEl   = $('#excludeRecent');
   const includeNameDateEl = $('#includeNameDate');
 
   const wordListEl     = $('#wordList');
@@ -68,12 +87,9 @@
   const sheetHeaderEl = $('#sheetHeader');
   const wordTemplate  = $('#worksheet-word');
 
-  // Init controls
   if (linesPerWordEl) linesPerWordEl.value = settings.linesPerWord;
-  if (excludeRecentEl) excludeRecentEl.value = settings.excludeRecent;
   if (includeNameDateEl) includeNameDateEl.checked = !!settings.includeNameDate;
 
-  // Toggle word source panes
   $$('input[name="wordSource"]').forEach(r => {
     r.addEventListener('change', () => {
       const val = getWordSource();
@@ -86,7 +102,6 @@
     return ($$('input[name="wordSource"]').find(i => i.checked) || {}).value;
   }
 
-  // Auto-seed once if empty
   async function maybeSeedLibrary() {
     if (library && library.length > 0) return;
     try {
@@ -96,7 +111,7 @@
       if (data && Array.isArray(data.library)) {
         const normalized = data.library.map(w => {
           const text = typeof w === 'string' ? w : (w?.text || '');
-          return text ? { id: uid('seed_'), text, usageCount: 0, lastUsedAt: 0 } : null;
+          return text ? { id: uid('seed_'), text } : null;
         }).filter(Boolean);
         if (normalized.length) {
           library = normalized;
@@ -106,7 +121,6 @@
     } catch {}
   }
 
-  // Library UI
   function renderLibrary() {
     const container = $('#libraryList');
     if (!container) return;
@@ -123,12 +137,10 @@
       const right = document.createElement('div');
       const btnPick = document.createElement('button');
       btnPick.textContent = 'Pick';
-      btnPick.title = 'Add to current worksheet';
       btnPick.addEventListener('click', () => addToPicked(w.text));
 
       const btnDel = document.createElement('button');
       btnDel.textContent = 'Delete';
-      btnDel.title = 'Remove from library';
       btnDel.addEventListener('click', () => {
         library = library.filter(x => x.id !== w.id);
         saveJSON(KEYS.LIB, library);
@@ -172,7 +184,6 @@
   }
   manualFilterEl?.addEventListener('input', renderManualList);
 
-  // Picked list UI (ALWAYS visible)
   function renderPicked() {
     if (!pickedListEl) return;
     pickedListEl.innerHTML = '';
@@ -190,7 +201,6 @@
 
       const up = document.createElement('button');
       up.textContent = '↑';
-      up.title = 'Move up';
       up.addEventListener('click', () => {
         if (idx > 0) {
           [picked[idx - 1], picked[idx]] = [picked[idx], picked[idx - 1]];
@@ -200,7 +210,6 @@
 
       const down = document.createElement('button');
       down.textContent = '↓';
-      down.title = 'Move down';
       down.addEventListener('click', () => {
         if (idx < picked.length - 1) {
           [picked[idx + 1], picked[idx]] = [picked[idx], picked[idx + 1]];
@@ -210,7 +219,6 @@
 
       const rem = document.createElement('button');
       rem.textContent = 'Remove';
-      rem.title = 'Remove from current worksheet';
       rem.addEventListener('click', () => {
         picked.splice(idx, 1);
         renderPicked();
@@ -257,14 +265,14 @@
   function addLibraryWords(words) {
     const existing = new Set(library.map(w => w.text.toLowerCase()));
     const newOnes = words
-      .map(w => w.split(',')) // allow comma-separated in bulk paste
+      .map(w => w.split(','))
       .flat()
       .map(w => w.trim())
       .filter(Boolean)
       .filter(w => !existing.has(w.toLowerCase()));
 
     for (const t of newOnes) {
-      library.push({ id: uid('w_'), text: t, usageCount: 0, lastUsedAt: 0 });
+      library.push({ id: uid('w_'), text: t });
       existing.add(t.toLowerCase());
     }
     saveJSON(KEYS.LIB, library);
@@ -272,38 +280,17 @@
     renderManualList();
   }
 
-  // Random pick
+  // Pure random pick
   $('#btnPickRandom')?.addEventListener('click', () => {
     const count = Math.max(1, parseInt((randomCountEl?.value || '1'), 10));
-    const excludeN = Math.max(0, parseInt((excludeRecentEl?.value || '0'), 10));
-    const recentWordIds = new Set(getRecentWordIds(excludeN));
-    const candidates = library.filter(w => !recentWordIds.has(w.id));
-
-    candidates.sort((a, b) => (a.usageCount - b.usageCount) || a.text.localeCompare(b.text));
-    const chosen = pickRandomDistinct(candidates, count).map(x => x.text);
+    if (!library.length) {
+      alert('Library is empty. Add some words first.');
+      return;
+    }
+    const chosen = randomSample(library, count).map(x => x.text);
     picked = chosen;
-    renderPicked();  // ensure the selected words are visible immediately
+    renderPicked();
   });
-
-  function pickRandomDistinct(arr, n) {
-    const copy = [...arr];
-    const out = [];
-    while (copy.length && out.length < n) {
-      const idx = Math.floor(Math.random() * Math.min(copy.length, 8)); // random among top 8 least-used
-      out.push(copy.splice(idx, 1)[0]);
-    }
-    return out;
-  }
-
-  function getRecentWordIds(n) {
-    if (n <= 0) return [];
-    const recentSheets = [...history].sort((a, b) => b.createdAt - a.createdAt).slice(0, n);
-    const ids = new Set();
-    for (const s of recentSheets) {
-      for (const wid of (s.wordIds || [])) ids.add(wid);
-    }
-    return Array.from(ids);
-  }
 
   // Preview & Print
   $('#btnPreview')?.addEventListener('click', renderPreview);
@@ -320,9 +307,7 @@
 
   function renderPreview() {
     const lpw = Math.max(1, parseInt((linesPerWordEl?.value || '1'), 10));
-    const exr = Math.max(0, parseInt((excludeRecentEl?.value || '0'), 10));
     settings.linesPerWord = lpw;
-    settings.excludeRecent = exr;
     settings.includeNameDate = !!(includeNameDateEl?.checked);
     saveJSON(KEYS.SETTINGS, settings);
 
@@ -337,7 +322,6 @@
       }
     }
 
-    // Name/Date header
     if (sheetHeaderEl) {
       sheetHeaderEl.innerHTML = '';
       sheetHeaderEl.classList.remove('visible');
@@ -392,13 +376,6 @@
     };
     history.push(sheet);
     saveJSON(KEYS.HIST, history);
-
-    const setIds = new Set(ids);
-    library = library.map(w => setIds.has(w.id)
-      ? { ...w, usageCount: (w.usageCount || 0) + 1, lastUsedAt: Date.now() }
-      : w
-    );
-    saveJSON(KEYS.LIB, library);
 
     renderHistory();
     renderLibrary();
@@ -497,7 +474,6 @@
     e.target.value = '';
   });
 
-  // Init
   async function init() {
     await maybeSeedLibrary();
     renderLibrary();
