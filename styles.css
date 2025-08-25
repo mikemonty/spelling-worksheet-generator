@@ -5,11 +5,11 @@
 /* ---------- Theme ---------- */
 :root {
   --bg: #f5f7fb;
-  --fg: #0f172a;             /* slate-900 */
-  --muted: #475569;          /* slate-600 */
+  --fg: #0f172a;
+  --muted: #475569;
   --panel: #ffffff;
-  --border: #e5e7eb;         /* gray-200 */
-  --accent: #3a68ff;         /* primary */
+  --border: #e5e7eb;
+  --accent: #3a68ff;
   --accent-600: #2e55d1;
   --accent-50: #eef3ff;
   --ring: rgba(58, 104, 255, 0.35);
@@ -50,7 +50,7 @@ header h1 {
 
 /* ---------- Layout ---------- */
 main {
-  max-width: var(--max-content-width);
+  max-width: var(--max-content_width, var(--max-content-width));
   margin: 0 auto;
   padding: 20px 16px 60px;
   display: grid;
@@ -183,7 +183,36 @@ textarea:focus {
 .row:last-child { border-bottom: none; }
 .row:hover { background: #fafcff; }
 .row .word { font-weight: 600; letter-spacing: 0.01em; }
+
 .picked { margin-top: 10px; }
+.picked-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin: 10px 0 6px;
+}
+.picked-header h3 { margin: 0; font-size: 15px; }
+.pill-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 28px; height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--accent-50);
+  border: 1px solid var(--accent);
+  color: var(--accent-600);
+  font-weight: 700;
+}
+.picked-actions {
+  display: flex; justify-content: flex-end; margin-top: 8px;
+}
+.btn-secondary {
+  background: #fff; color: var(--fg);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover {
+  background: var(--accent-50);
+  border-color: var(--accent);
+  color: var(--accent-600);
+}
+
 .picked-list .row { background: #f8fbff; }
 
 .bulk textarea { width: 100%; }
@@ -226,20 +255,6 @@ button:hover { background: var(--accent-600); }
 button:active { transform: translateY(1px); }
 button:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--ring); }
 
-/* Secondary buttons in rows */
-.row button {
-  padding: 6px 10px;
-  font-size: 13px;
-  background: #ffffff;
-  color: var(--fg);
-  border: 1px solid var(--border);
-}
-.row button:hover {
-  background: var(--accent-50);
-  border-color: var(--accent);
-  color: var(--accent-600);
-}
-
 /* Action row */
 .actions {
   display: flex; flex-wrap: wrap;
@@ -268,9 +283,9 @@ button:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--ring); }
     0 10px 40px rgba(15,23,42,0.08);
 }
 
-/* NEW: Name/Date header that prints */
+/* Name/Date header that prints */
 .sheet-header {
-  display: none;              /* hidden until checkbox is checked (then JS fills & shows) */
+  display: none;
   margin: 6px 2px 14px;
 }
 .sheet-header.visible { display: block; }
@@ -334,19 +349,11 @@ button:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--ring); }
 }
 @media print {
   body { background: white; }
-  /* hide everything except the worksheet area */
   header, footer,
   .panel:not(.preview-container) { display: none !important; }
-
-  /* IMPORTANT: hide the "Print Preview" heading */
-  .preview-container h2 { display: none !important; }
-
+  .preview-container h2 { display: none !important; } /* Hide "Print Preview" label */
   main { padding: 0; }
-
-  /* Remove card chrome when printing */
   .preview-container { grid-column: 1 / -1; border: none; box-shadow: none; }
   .sheet { border: none; box-shadow: none; padding: 0; }
-
-  /* Keep the Name/Date header and columns */
   #preview { column-count: 2; column-gap: 24px; }
 }

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Spelling Worksheet Generator</title>
-  <link rel="stylesheet" href="styles.css?v=2025-08-25" />
+  <link rel="stylesheet" href="styles.css?v=2025-08-25b" />
 </head>
 <body>
   <header>
@@ -38,18 +38,16 @@
         <label><input type="radio" name="wordSource" value="quickadd" /> Quick add (comma/line-separated)</label>
       </fieldset>
 
+      <!-- Manual picker -->
       <div id="manualPicker" class="picker">
         <div class="form-row">
           <label for="manualFilter">Filter</label>
           <input type="text" id="manualFilter" placeholder="search words..." />
         </div>
         <div id="wordList" class="list"></div>
-        <div class="picked">
-          <h3>Picked (<span id="pickedCount">0</span>)</h3>
-          <div id="pickedList" class="list picked-list"></div>
-        </div>
       </div>
 
+      <!-- Random picker -->
       <div id="randomPicker" class="picker hidden">
         <div class="form-row">
           <label for="randomCount">How many random words?</label>
@@ -58,10 +56,23 @@
         <button id="btnPickRandom">Pick Random</button>
       </div>
 
+      <!-- Quick add -->
       <div id="quickAdd" class="picker hidden">
         <label for="quickAddArea">Enter words (comma or newline separated):</label>
         <textarea id="quickAddArea" rows="6" placeholder="cat, dog, airplane..."></textarea>
         <div class="note">These will be added to your library and also selected for this worksheet.</div>
+      </div>
+
+      <!-- ALWAYS VISIBLE: Picked (selected) words -->
+      <div class="picked">
+        <div class="picked-header">
+          <h3>Selected words</h3>
+          <span class="pill-count" id="pickedCount">0</span>
+        </div>
+        <div id="pickedList" class="list picked-list"></div>
+        <div class="picked-actions">
+          <button id="btnClearPicked" class="btn-secondary">Clear selected</button>
+        </div>
       </div>
 
       <div class="form-row actions">
@@ -100,7 +111,7 @@
     <section class="panel preview-container">
       <h2 class="screen-only">Print Preview</h2>
 
-      <!-- NEW: Name/Date header that prints (optional via checkbox) -->
+      <!-- Name/Date header that prints (optional via checkbox) -->
       <div id="sheetHeader" class="sheet-header" aria-hidden="true"></div>
 
       <!-- The worksheet content (two columns) -->
@@ -119,6 +130,6 @@
     </div>
   </template>
 
-  <script src="app.js?v=2025-08-25"></script>
+  <script src="app.js?v=2025-08-25b"></script>
 </body>
 </html>

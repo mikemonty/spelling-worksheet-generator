@@ -4,15 +4,13 @@
 // - History tracking & usage counts
 // - Import/Export JSON or CSV
 // - Auto-seed from words-starter.json on first load (if present)
-// - NEW: Optional Name/Date header (checkbox)
+// - Optional Name/Date header (checkbox)
+// - FIX: "Selected words" list always visible (moved out of manual picker)
 
 (() => {
   const $  = (sel) => document.querySelector(sel);
   const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
-  // -----------------------
-  // Storage keys & helpers
-  // -----------------------
   const KEYS = {
     LIB: 'swg_library_v1',
     HIST: 'swg_history_v1',
@@ -42,48 +40,40 @@
     return s;
   }
 
-  // -----------------------
-  // App state
-  // -----------------------
-  let library  = loadJSON(KEYS.LIB, []);   // [{id,text,usageCount,lastUsedAt}]
-  let history  = loadJSON(KEYS.HIST, []);  // [{id,createdAt,words,wordIds,linesPerWord}]
-  let picked   = [];                       // [string]
+  let library  = loadJSON(KEYS.LIB, []);
+  let history  = loadJSON(KEYS.HIST, []);
+  let picked   = [];
   let settings = Object.assign({
     linesPerWord: 3,
     excludeRecent: 0,
     includeNameDate: false
   }, loadJSON(KEYS.SETTINGS, {}));
 
-  // -----------------------
-  // Elements
-  // -----------------------
-  const linesPerWordEl  = $('#linesPerWord');
-  const excludeRecentEl = $('#excludeRecent');
+  const linesPerWordEl    = $('#linesPerWord');
+  const excludeRecentEl   = $('#excludeRecent');
   const includeNameDateEl = $('#includeNameDate');
 
-  const wordListEl = $('#wordList');
-  const pickedListEl = $('#pickedList');
-  const pickedCountEl = $('#pickedCount');
+  const wordListEl     = $('#wordList');
+  const pickedListEl   = $('#pickedList');
+  const pickedCountEl  = $('#pickedCount');
   const manualFilterEl = $('#manualFilter');
-  const randomCountEl = $('#randomCount');
-  const quickAddArea = $('#quickAddArea');
+  const randomCountEl  = $('#randomCount');
+  const quickAddArea   = $('#quickAddArea');
 
   const manualPicker = $('#manualPicker');
   const randomPicker = $('#randomPicker');
-  const quickAdd = $('#quickAdd');
+  const quickAdd     = $('#quickAdd');
 
-  const previewEl = $('#preview');
+  const previewEl     = $('#preview');
   const sheetHeaderEl = $('#sheetHeader');
-  const wordTemplate = $('#worksheet-word');
+  const wordTemplate  = $('#worksheet-word');
 
-  // Initialize control values
+  // Init controls
   if (linesPerWordEl) linesPerWordEl.value = settings.linesPerWord;
   if (excludeRecentEl) excludeRecentEl.value = settings.excludeRecent;
   if (includeNameDateEl) includeNameDateEl.checked = !!settings.includeNameDate;
 
-  // -----------------------
-  // Word source toggle
-  // -----------------------
+  // Toggle word source panes
   $$('input[name="wordSource"]').forEach(r => {
     r.addEventListener('change', () => {
       const val = getWordSource();
@@ -96,12 +86,9 @@
     return ($$('input[name="wordSource"]').find(i => i.checked) || {}).value;
   }
 
-  // -----------------------
-  // Auto-seed (first load)
-  // -----------------------
+  // Auto-seed once if empty
   async function maybeSeedLibrary() {
-    if (library && library.length > 0) return; // already have data
-
+    if (library && library.length > 0) return;
     try {
       const res = await fetch('words-starter.json', { cache: 'no-store' });
       if (!res.ok) return;
@@ -109,23 +96,17 @@
       if (data && Array.isArray(data.library)) {
         const normalized = data.library.map(w => {
           const text = typeof w === 'string' ? w : (w?.text || '');
-          return text
-            ? { id: uid('seed_'), text, usageCount: 0, lastUsedAt: 0 }
-            : null;
+          return text ? { id: uid('seed_'), text, usageCount: 0, lastUsedAt: 0 } : null;
         }).filter(Boolean);
         if (normalized.length) {
           library = normalized;
           saveJSON(KEYS.LIB, library);
         }
       }
-    } catch {
-      // ignore seeding errors
-    }
+    } catch {}
   }
 
-  // -----------------------
   // Library UI
-  // -----------------------
   function renderLibrary() {
     const container = $('#libraryList');
     if (!container) return;
@@ -191,9 +172,7 @@
   }
   manualFilterEl?.addEventListener('input', renderManualList);
 
-  // -----------------------
-  // Picked list UI
-  // -----------------------
+  // Picked list UI (ALWAYS visible)
   function renderPicked() {
     if (!pickedListEl) return;
     pickedListEl.innerHTML = '';
@@ -247,6 +226,12 @@
     });
   }
 
+  $('#btnClearPicked')?.addEventListener('click', () => {
+    picked = [];
+    renderPicked();
+    renderPreview();
+  });
+
   function addToPicked(word) {
     if (!picked.includes(word)) {
       picked.push(word);
@@ -254,9 +239,7 @@
     }
   }
 
-  // -----------------------
-  // Library: add word(s)
-  // -----------------------
+  // Add words to library
   $('#btnAddWord')?.addEventListener('click', () => {
     const v = ($('#addWordInput')?.value || '').trim();
     if (!v) return;
@@ -289,20 +272,17 @@
     renderManualList();
   }
 
-  // -----------------------
   // Random pick
-  // -----------------------
   $('#btnPickRandom')?.addEventListener('click', () => {
     const count = Math.max(1, parseInt((randomCountEl?.value || '1'), 10));
     const excludeN = Math.max(0, parseInt((excludeRecentEl?.value || '0'), 10));
     const recentWordIds = new Set(getRecentWordIds(excludeN));
     const candidates = library.filter(w => !recentWordIds.has(w.id));
 
-    // Bias towards least practiced; among top few, pick at random
     candidates.sort((a, b) => (a.usageCount - b.usageCount) || a.text.localeCompare(b.text));
     const chosen = pickRandomDistinct(candidates, count).map(x => x.text);
     picked = chosen;
-    renderPicked();
+    renderPicked();  // ensure the selected words are visible immediately
   });
 
   function pickRandomDistinct(arr, n) {
@@ -325,9 +305,7 @@
     return Array.from(ids);
   }
 
-  // -----------------------
   // Preview & Print
-  // -----------------------
   $('#btnPreview')?.addEventListener('click', renderPreview);
   $('#btnPrint')?.addEventListener('click', () => {
     renderPreview();
@@ -341,7 +319,6 @@
   });
 
   function renderPreview() {
-    // persist settings
     const lpw = Math.max(1, parseInt((linesPerWordEl?.value || '1'), 10));
     const exr = Math.max(0, parseInt((excludeRecentEl?.value || '0'), 10));
     settings.linesPerWord = lpw;
@@ -349,7 +326,6 @@
     settings.includeNameDate = !!(includeNameDateEl?.checked);
     saveJSON(KEYS.SETTINGS, settings);
 
-    // Quick add path: add & select immediately
     if (getWordSource() === 'quickadd') {
       const raw = (quickAddArea?.value || '');
       const words = raw.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
@@ -357,10 +333,11 @@
         addLibraryWords(words);
         picked = words;
         quickAddArea.value = '';
+        renderPicked();
       }
     }
 
-    // Build Name/Date header
+    // Name/Date header
     if (sheetHeaderEl) {
       sheetHeaderEl.innerHTML = '';
       sheetHeaderEl.classList.remove('visible');
@@ -386,7 +363,6 @@
       }
     }
 
-    // Build worksheet preview
     if (!previewEl) return;
     previewEl.innerHTML = '';
     for (const w of picked) {
@@ -402,9 +378,7 @@
     }
   }
 
-  // -----------------------
   // History
-  // -----------------------
   $('#btnSaveWorksheet')?.addEventListener('click', () => {
     if (!picked.length) { alert('Pick some words first.'); return; }
     const map = new Map(library.map(w => [w.text.toLowerCase(), w.id]));
@@ -419,7 +393,6 @@
     history.push(sheet);
     saveJSON(KEYS.HIST, history);
 
-    // bump usage
     const setIds = new Set(ids);
     library = library.map(w => setIds.has(w.id)
       ? { ...w, usageCount: (w.usageCount || 0) + 1, lastUsedAt: Date.now() }
@@ -473,20 +446,16 @@
     }
   }
 
-  // -----------------------
   // Import / Export
-  // -----------------------
   $('#btnExportJSON')?.addEventListener('click', () => {
     const data = JSON.stringify({ library }, null, 2);
     downloadFile('library.json', data, 'application/json');
   });
-
   $('#btnExportCSV')?.addEventListener('click', () => {
     const lines = ['word'];
     for (const w of library) lines.push(csvEscape(w.text));
     downloadFile('library.csv', lines.join('\n'), 'text/csv');
   });
-
   $('#fileImport')?.addEventListener('change', async (e) => {
     const f = e.target.files[0];
     if (!f) return;
@@ -503,7 +472,7 @@
           alert('JSON format not recognized.');
         }
         alert('Imported JSON.');
-      } catch (err) {
+      } catch {
         alert('Invalid JSON.');
       }
     } else if (f.name.endsWith('.csv')) {
@@ -517,7 +486,6 @@
           if (firstCol) words.push(firstCol);
         }
       } else {
-        // no header, treat all lines as words
         words = rows;
       }
       addLibraryWords(words);
@@ -529,16 +497,14 @@
     e.target.value = '';
   });
 
-  // -----------------------
-  // Init flow
-  // -----------------------
+  // Init
   async function init() {
-    await maybeSeedLibrary();     // Load starter pack if empty & available
+    await maybeSeedLibrary();
     renderLibrary();
     renderManualList();
     renderPicked();
     renderHistory();
-    renderPreview();              // ensure header visibility matches checkbox on load
+    renderPreview();
   }
 
   init();
