@@ -4,6 +4,7 @@
 // - History tracking & usage counts
 // - Import/Export JSON or CSV
 // - Auto-seed from words-starter.json on first load (if present)
+// - NEW: Optional Name/Date header (checkbox)
 
 (() => {
   const $  = (sel) => document.querySelector(sel);
@@ -49,14 +50,17 @@
   let picked   = [];                       // [string]
   let settings = Object.assign({
     linesPerWord: 3,
-    excludeRecent: 0
+    excludeRecent: 0,
+    includeNameDate: false
   }, loadJSON(KEYS.SETTINGS, {}));
 
   // -----------------------
   // Elements
   // -----------------------
-  const linesPerWordEl = $('#linesPerWord');
+  const linesPerWordEl  = $('#linesPerWord');
   const excludeRecentEl = $('#excludeRecent');
+  const includeNameDateEl = $('#includeNameDate');
+
   const wordListEl = $('#wordList');
   const pickedListEl = $('#pickedList');
   const pickedCountEl = $('#pickedCount');
@@ -69,11 +73,13 @@
   const quickAdd = $('#quickAdd');
 
   const previewEl = $('#preview');
+  const sheetHeaderEl = $('#sheetHeader');
   const wordTemplate = $('#worksheet-word');
 
   // Initialize control values
   if (linesPerWordEl) linesPerWordEl.value = settings.linesPerWord;
   if (excludeRecentEl) excludeRecentEl.value = settings.excludeRecent;
+  if (includeNameDateEl) includeNameDateEl.checked = !!settings.includeNameDate;
 
   // -----------------------
   // Word source toggle
@@ -98,7 +104,7 @@
 
     try {
       const res = await fetch('words-starter.json', { cache: 'no-store' });
-      if (!res.ok) return; // file missing or not served; skip
+      if (!res.ok) return;
       const data = await res.json();
       if (data && Array.isArray(data.library)) {
         const normalized = data.library.map(w => {
@@ -328,12 +334,19 @@
     window.print();
   });
 
+  includeNameDateEl?.addEventListener('change', () => {
+    settings.includeNameDate = !!includeNameDateEl.checked;
+    saveJSON(KEYS.SETTINGS, settings);
+    renderPreview();
+  });
+
   function renderPreview() {
     // persist settings
     const lpw = Math.max(1, parseInt((linesPerWordEl?.value || '1'), 10));
     const exr = Math.max(0, parseInt((excludeRecentEl?.value || '0'), 10));
     settings.linesPerWord = lpw;
     settings.excludeRecent = exr;
+    settings.includeNameDate = !!(includeNameDateEl?.checked);
     saveJSON(KEYS.SETTINGS, settings);
 
     // Quick add path: add & select immediately
@@ -347,7 +360,33 @@
       }
     }
 
-    // Build preview
+    // Build Name/Date header
+    if (sheetHeaderEl) {
+      sheetHeaderEl.innerHTML = '';
+      sheetHeaderEl.classList.remove('visible');
+      if (settings.includeNameDate) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'name-date';
+
+        const nameField = document.createElement('div');
+        nameField.className = 'line-field';
+        nameField.innerHTML = '<span class="line-label">Name:</span><span class="line-blank"></span>';
+
+        const dateField = document.createElement('div');
+        dateField.className = 'line-field';
+        dateField.innerHTML = '<span class="line-label">Date:</span><span class="line-blank"></span>';
+
+        wrapper.appendChild(nameField);
+        wrapper.appendChild(dateField);
+        sheetHeaderEl.appendChild(wrapper);
+        sheetHeaderEl.classList.add('visible');
+        sheetHeaderEl.setAttribute('aria-hidden', 'false');
+      } else {
+        sheetHeaderEl.setAttribute('aria-hidden', 'true');
+      }
+    }
+
+    // Build worksheet preview
     if (!previewEl) return;
     previewEl.innerHTML = '';
     for (const w of picked) {
@@ -499,6 +538,7 @@
     renderManualList();
     renderPicked();
     renderHistory();
+    renderPreview();              // ensure header visibility matches checkbox on load
   }
 
   init();

@@ -1,6 +1,5 @@
 /* =========================
-   Spelling Worksheet Generator – Modern UI
-   Drop-in replacement for styles.css
+   Spelling Worksheet Generator – Modern UI + Print polish
    ========================= */
 
 /* ---------- Theme ---------- */
@@ -15,7 +14,7 @@
   --accent-50: #eef3ff;
   --ring: rgba(58, 104, 255, 0.35);
 
-  /* Worksheet variables (kept from original) */
+  /* Worksheet variables */
   --page-margin: 0.5in;
   --line-height: 26px;
   --line-thickness: 2px;
@@ -23,7 +22,7 @@
   --max-content-width: 1200px;
 }
 
-/* ---------- Base / Reset ---------- */
+/* ---------- Base ---------- */
 * { box-sizing: border-box; }
 html, body { height: 100%; }
 body {
@@ -47,11 +46,7 @@ header h1 {
   font-size: clamp(22px, 2.4vw, 30px);
   letter-spacing: -0.02em;
 }
-.subtitle {
-  margin: 0;
-  color: var(--muted);
-  font-size: 14px;
-}
+.subtitle { margin: 0; color: var(--muted); font-size: 14px; }
 
 /* ---------- Layout ---------- */
 main {
@@ -123,7 +118,7 @@ textarea:focus {
   box-shadow: 0 0 0 4px var(--ring);
 }
 
-/* Radio group (word source) */
+/* Radio group */
 .word-source {
   display: flex;
   flex-wrap: wrap;
@@ -153,8 +148,7 @@ textarea:focus {
   appearance: none;
   width: 14px; height: 14px; border-radius: 999px;
   border: 2px solid var(--border);
-  display: inline-block;
-  position: relative;
+  display: inline-block; position: relative;
 }
 .word-source input[type="radio"]:checked {
   border-color: var(--accent);
@@ -232,7 +226,7 @@ button:hover { background: var(--accent-600); }
 button:active { transform: translateY(1px); }
 button:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--ring); }
 
-/* Subtle secondary buttons (for row actions) */
+/* Secondary buttons in rows */
 .row button {
   padding: 6px 10px;
   font-size: 13px;
@@ -274,6 +268,34 @@ button:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--ring); }
     0 10px 40px rgba(15,23,42,0.08);
 }
 
+/* NEW: Name/Date header that prints */
+.sheet-header {
+  display: none;              /* hidden until checkbox is checked (then JS fills & shows) */
+  margin: 6px 2px 14px;
+}
+.sheet-header.visible { display: block; }
+.name-date {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: var(--fg);
+}
+.line-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 42%;
+}
+.line-label { font-weight: 600; }
+.line-blank {
+  flex: 1 1 auto;
+  border-bottom: 2px solid #0f172a;
+  height: 1.4em;
+}
+
 /* Two-column content */
 #preview { column-count: 2; column-gap: 28px; }
 .ws-word {
@@ -295,22 +317,36 @@ button:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--ring); }
   border-radius: 2px;
 }
 
+/* Utility */
+.hidden { display: none !important; }
+.screen-only { display: block; }
+
 /* ---------- Responsive ---------- */
 @media (max-width: 980px) {
   main { grid-template-columns: 1fr; }
   .form-row label { min-width: 150px; }
 }
 
-/* ---------- Print styles (unchanged core behavior) ---------- */
+/* ---------- Print styles ---------- */
 @page {
   size: Letter;
   margin: var(--page-margin);
 }
 @media print {
   body { background: white; }
-  header, footer, .panel:not(.preview-container) { display: none !important; }
+  /* hide everything except the worksheet area */
+  header, footer,
+  .panel:not(.preview-container) { display: none !important; }
+
+  /* IMPORTANT: hide the "Print Preview" heading */
+  .preview-container h2 { display: none !important; }
+
   main { padding: 0; }
+
+  /* Remove card chrome when printing */
   .preview-container { grid-column: 1 / -1; border: none; box-shadow: none; }
   .sheet { border: none; box-shadow: none; padding: 0; }
+
+  /* Keep the Name/Date header and columns */
   #preview { column-count: 2; column-gap: 24px; }
 }
